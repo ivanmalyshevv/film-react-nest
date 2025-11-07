@@ -42,3 +42,12 @@ export class CreateOrderDto {
   @Type(() => TicketDto)
   tickets: TicketDto[];
 }
+
+export class OrderResponseDto {
+  total: number;
+  items: TicketDto[];
+  updatedSessions: Array<{
+    sessionId: string;
+    taken: string;
+  }>;
+}
