@@ -1,7 +1,3 @@
 FROM nginx:alpine
-
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+COPY --from=ghcr.io/ivanmalyshev/film-react-nest/film-api-frontend:latest /usr/share/nginx/html /usr/share/nginx/html

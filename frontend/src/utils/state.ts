@@ -112,7 +112,7 @@ export function appReducer(state: AppState, action: Actions): AppState {
             return {
                 ...state,
                 films: action.payload,
-                selectedFilm: action.payload[0].id
+                selectedFilm: action.payload && action.payload.length > 0 ? action.payload[0].id : null
             };
         case 'selectFilm':
             return {

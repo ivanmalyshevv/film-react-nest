@@ -13,7 +13,8 @@ services:
       - DATABASE_NAME=film_db
       - LOGGER_TYPE=json
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     networks:
       - film-network
 
@@ -27,25 +28,14 @@ services:
       - POSTGRES_DB=film_db
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./backend/test/prac.init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./backend/test/prac.films.sql:/docker-entrypoint-initdb.d/02-films.sql
-      - ./backend/test/prac.shedules.sql:/docker-entrypoint-initdb.d/03-schedules.sql
-    networks:
-      - film-network
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: film-api-pgadmin
-    restart: always
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
-      - PGADMIN_DEFAULT_PASSWORD=admin
-    ports:
-      - "8080:80"
-    depends_on:
-      - database
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - ./backend/test/prac.init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./backend/test/prac.films.sql:/docker-entrypoint-initdb.d/02-films.sql:ro
+      - ./backend/test/prac.shedules.sql:/docker-entrypoint-initdb.d/03-schedules.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U film_user -d film_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - film-network
 
@@ -57,16 +47,6 @@ services:
       - "80:80"
     depends_on:
       - backend
-    volumes:
-      - frontend_dist:/usr/share/nginx/html
-    networks:
-      - film-network
-
-  frontend:
-    image: ghcr.io/ivanmalyshev/film-react-nest/film-api-frontend:latest
-    container_name: film-api-frontend-builder
-    volumes:
-      - frontend_dist:/usr/share/nginx/html
     networks:
       - film-network
 
@@ -76,5 +56,3 @@ networks:
 
 volumes:
   db_data:
-  pgadmin_data:
-  frontend_dist:
