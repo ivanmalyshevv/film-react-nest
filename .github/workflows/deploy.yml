@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Build and Push Docker Images
 
 on:
   push:
@@ -13,64 +13,55 @@ jobs:
       packages: write
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Create frontend .env file
-      run: |
-        echo "VITE_API_URL=https://api.ivanmalyshev.nomorepartiessbs.ru/api/afisha" > ./frontend/.env.production
-        echo "VITE_CDN_URL=https://api.ivanmalyshev.nomorepartiessbs.ru/content/afisha" >> ./frontend/.env.production
+      - name: Create frontend .env file
+        run: |
+          echo "VITE_API_URL=https://api.ivanmalyshev.nomorepartiessbs.ru/api/afisha" > ./frontend/.env.production
+          echo "VITE_CDN_URL=https://api.ivanmalyshev.nomorepartiessbs.ru/content/afisha" >> ./frontend/.env.production
 
-    - name: Build and push backend
-      uses: docker/build-push-action@v5
-      with:
-        context: ./backend
-        push: true
-        tags: |
-          ghcr.io/${{ github.repository }}/film-api-backend:latest
-          ghcr.io/${{ github.repository }}/film-api-backend:${{ github.sha }}
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/backend:latest
+            ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
 
-    - name: Build and push frontend
-      uses: docker/build-push-action@v5
-      with:
-        context: ./frontend
-        push: true
-        tags: |
-          ghcr.io/${{ github.repository }}/film-api-frontend:latest
-          ghcr.io/${{ github.repository }}/film-api-frontend:${{ github.sha }}
-
-    - name: Build and push nginx
-      uses: docker/build-push-action@v5
-      with:
-        context: ./nginx
-        push: true
-        tags: |
-          ghcr.io/${{ github.repository }}/film-api-nginx:latest
-          ghcr.io/${{ github.repository }}/film-api-nginx:${{ github.sha }}
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/frontend:latest
+            ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
-    - name: Deploy to server
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: 158.160.80.202
-        username: ivanmalyshev
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd ~/film-app
-          docker compose pull
-          docker compose down
-          docker compose up -d
-          docker system prune -f
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 158.160.80.202
+          username: ivanmalyshev
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/film-app
+            docker compose pull
+            docker compose down
+            docker compose up -d
+            docker system prune -f
