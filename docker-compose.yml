@@ -1,0 +1,67 @@
+services:
+  db:
+    image: postgres:16.4
+    env_file:
+      - ./backend/.env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./backend/test/prac.init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backend/test/prac.films.sql:/docker-entrypoint-initdb.d/02-films.sql
+      - ./backend/test/prac.shedules.sql:/docker-entrypoint-initdb.d/03-schedules.sql
+    networks:
+      - internal
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always  
+    ports:
+      - "8080:80"
+    environment:
+      - ./backend/.env
+    networks:
+      - internal
+  frontend:
+    image: ghcr.io/__/film-react-nest/film-api-frontend:latest
+    build:
+      context: frontend
+    environment:
+      VITE_BASE_URL: /
+      VITE_API_URL: /api/afisha
+      VITE_CDN_URL: /content/afisha
+    volumes:
+      - frontend.build:/app/dist
+
+  backend:
+    image: ghcr.io/_____/film-react-nest-backend:latest
+    build:
+      context: backend
+    env_file:
+      - ./backend/.env
+    ports: 
+      - 3000:3000  
+    networks:
+      - internal
+    depends_on:
+      - db  
+
+  server :
+    image: ghcr.io/_____/film-react-nest-server:latest
+    build:
+      context: nginx
+    ports: 
+      - 80:80 
+    volumes:
+      - frontend.build/var/www:
+    depends_on:
+      - frontend 
+      - backend 
+    networks:
+      - internal
+
+
+volumes:
+  db_data:
+  pgadmin_data:
+  frontend_build:
+
+networks:
+  internal:
