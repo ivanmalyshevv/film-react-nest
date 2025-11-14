@@ -1,7 +1,7 @@
 FROM node:20 AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN rm -rf package-lock.json node_modules && npm install
 COPY . .
 RUN npm run build
 
