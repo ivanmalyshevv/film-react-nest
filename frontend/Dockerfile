@@ -1,9 +1,11 @@
 FROM node:20 AS builder
 
+ENV ROLLUP_SKIP_NATIVE=true
+
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --no-optional
+RUN npm install
 
 COPY . .
 RUN npm run build
