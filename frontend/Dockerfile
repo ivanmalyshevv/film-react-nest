@@ -8,7 +8,8 @@ COPY package*.json ./
 RUN pnpm install
 
 COPY . .
-RUN pnpm run build
+
+RUN pnpm exec vite build
 
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
