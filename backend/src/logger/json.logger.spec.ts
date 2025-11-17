@@ -15,7 +15,7 @@ describe('JsonLogger', () => {
     jsonLogger.warn('hello', { a: 'b', c: 1 });
     expect(log).toBeCalledTimes(1);
     expect(log).toBeCalledWith(
-      '{"level":"warn","message":"hello","optionalParams": [[{"a":"b","c":1}]]}',
+      '{"level":"warn","message":"hello","optionalParams":[[{"a":"b","c":1}]]}',
     );
   });
 });

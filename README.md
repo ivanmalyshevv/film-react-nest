@@ -1,5 +1,18 @@
 # FILM!
 
+## Деплой
+
+Приложение развернуто на Yandex Cloud:
+
+- **Фронтенд:** http://ivanmalyshev.nomorepartiessbs.ru
+- **API:** http://api.ivanmalyshev.nomorepartiessbs.ru
+
+## Docker образы
+
+- Frontend: `ghcr.io/ivanmalyshevv/film-react-nest-frontend:review-3`
+- Backend: `ghcr.io/ivanmalyshevv/film-react-nest-backend:review-3`
+- Nginx: `ghcr.io/ivanmalyshevv/film-react-nest-nginx:review-3`
+
 ## Установка
 
 ### MongoDB

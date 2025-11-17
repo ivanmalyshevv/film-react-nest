@@ -1,67 +1,88 @@
 services:
-  db:
-    image: postgres:16.4
+  backend:
+    build:
+      context: ./backend
+    image: ghcr.io/ivanmalyshevv/film-react-nest-backend:review-3
+    container_name: film-backend
+    restart: unless-stopped
     env_file:
       - ./backend/.env
-    volumes:
-      - db_data:/var/lib/postgresql/data
-      - ./backend/test/prac.init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./backend/test/prac.films.sql:/docker-entrypoint-initdb.d/02-films.sql
-      - ./backend/test/prac.shedules.sql:/docker-entrypoint-initdb.d/03-schedules.sql
     networks:
-      - internal
+      - app-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    container_name: film-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DATABASE_USERNAME}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./test/prac.init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./test/prac.films.sql:/docker-entrypoint-initdb.d/02-films.sql
+      - ./test/prac.shedules.sql:/docker-entrypoint-initdb.d/03-schedules.sql
+    networks:
+      - app-network
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   pgadmin:
     image: dpage/pgadmin4
-    restart: always  
+    container_name: film-pgadmin
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "8080:80"
-    environment:
-      - ./backend/.env
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
     networks:
-      - internal
+      - app-network
+    depends_on:
+      - db
+
   frontend:
-    image: ghcr.io/__/film-react-nest/film-api-frontend:latest
     build:
-      context: frontend
-    environment:
-      VITE_BASE_URL: /
-      VITE_API_URL: /api/afisha
-      VITE_CDN_URL: /content/afisha
+      context: ./frontend
+    image: ghcr.io/ivanmalyshevv/film-react-nest-frontend:review-3
     volumes:
-      - frontend.build:/app/dist
-
-  backend:
-    image: ghcr.io/_____/film-react-nest-backend:latest
-    build:
-      context: backend
-    env_file:
-      - ./backend/.env
-    ports: 
-      - 3000:3000  
+      - react_build:/usr/share/nginx/html
     networks:
-      - internal
-    depends_on:
-      - db  
+      - app-network
+    command: sh -c "cp -r /app/dist/* /usr/share/nginx/html/ && echo 'Frontend copied to volume'"
 
-  server :
-    image: ghcr.io/_____/film-react-nest-server:latest
+  nginx:
     build:
-      context: nginx
-    ports: 
-      - 80:80 
+      context: ./nginx
+    image: ghcr.io/ivanmalyshevv/film-react-nest-nginx:review-3
+    container_name: film-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
     volumes:
-      - frontend.build/var/www:
-    depends_on:
-      - frontend 
-      - backend 
+      - react_build:/usr/share/nginx/html
     networks:
-      - internal
-
+      - app-network
+    depends_on:
+      - frontend-
+      - backend
 
 volumes:
-  db_data:
-  pgadmin_data:
-  frontend_build:
+  pgdata:
+  pgadmin-data:
+  react_build:
 
 networks:
-  internal:
+  app-network:
+    driver: bridge
