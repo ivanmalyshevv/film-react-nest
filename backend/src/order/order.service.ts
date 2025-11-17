@@ -1,7 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateOrderDto } from './dto/order.dto';
-import { Schedule } from 'src/films/entities/schedule.entity';
-import { FilmsDataProvider } from 'src/repository/films.repository';
+import { Schedule } from '../films/entities/schedule.entity';
+import { FilmsDataProvider } from '../repository/films.repository';
 import { InjectRepository } from '@nestjs/typeorm'; 
 import { Repository } from 'typeorm'; 
 

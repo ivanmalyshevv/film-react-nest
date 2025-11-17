@@ -5,7 +5,6 @@ import { ConfigModule } from '@nestjs/config';
 import * as path from 'node:path';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { configProvider } from './app.config.provider';
 import { FilmsController } from './films/films.controller';
 import { FilmsService } from './films/films.service';
 import { OrderController } from './order/order.controller';
